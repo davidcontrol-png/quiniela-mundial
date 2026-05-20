@@ -581,3 +581,107 @@ body::before {
   .match-card { padding: 1.25rem; }
   .app-content { padding: 1.5rem 1.5rem 5rem; }
 }
+
+/* ── BOTÓN CAMBIAR CONTRASEÑA ────────────────────────────── */
+.btn-change-pass {
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.15);
+  color: var(--gold);
+  font-size: 0.9rem;
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.btn-change-pass:hover { background: rgba(244,212,63,0.15); border-color: var(--gold); }
+
+/* ── MODAL CONTRASEÑA ────────────────────────────────────── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 1rem;
+}
+
+.modal-box {
+  background: var(--navy-mid);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem;
+  width: 100%; max-width: 400px;
+  animation: slideUp 0.25s ease;
+}
+
+.modal-box h3 {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 1px;
+  color: var(--gold);
+  margin-bottom: 1.25rem;
+}
+
+.form-field {
+  margin-bottom: 0.9rem;
+}
+
+.form-field label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--grey);
+  margin-bottom: 0.35rem;
+}
+
+.form-field input {
+  width: 100%;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid var(--card-border);
+  border-radius: 7px;
+  padding: 0.65rem 0.85rem;
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  transition: border-color 0.2s;
+}
+
+.form-field input:focus { outline: none; border-color: var(--gold); }
+
+.pass-error {
+  color: var(--red);
+  font-size: 0.82rem;
+  min-height: 1.2em;
+  margin-bottom: 0.5rem;
+}
+
+.modal-actions {
+  display: flex; gap: 0.75rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.btn-cancel-modal {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--grey);
+  border-radius: 7px;
+  padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+}
+.btn-cancel-modal:hover { border-color: var(--white); color: var(--white); }
+
+.btn-save-modal {
+  background: linear-gradient(135deg, var(--red), var(--red-dark));
+  color: var(--white);
+  border: none;
+  border-radius: 7px;
+  padding: 0.6rem 1.4rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-save-modal:hover { transform: translateY(-1px); box-shadow: 0 4px 15px rgba(230,57,70,0.3); }
