@@ -23,15 +23,12 @@ auth.onAuthStateChanged(async user => {
       if (!snap.exists) { auth.signOut(); return; }
       const data = snap.data();
       if (data.disabled) { auth.signOut(); return; }
-
       document.getElementById("screen-login").classList.add("hidden");
       document.getElementById("screen-app").classList.remove("hidden");
       document.getElementById("user-display-name").textContent = data.displayName || data.username;
       document.getElementById("user-avatar").textContent = (data.displayName || data.username || "?").charAt(0).toUpperCase();
       loadApp();
-    } catch(e) {
-      console.error("Error cargando usuario:", e);
-    }
+    } catch(e) { console.error("Error cargando usuario:", e); }
   } else {
     currentUser = null;
     document.getElementById("screen-login").classList.remove("hidden");
@@ -40,7 +37,7 @@ auth.onAuthStateChanged(async user => {
 });
 
 // ============================================================
-//  LOGIN — busca por username en Firestore, luego auth con email
+//  LOGIN
 // ============================================================
 document.getElementById("btn-login").addEventListener("click", handleLogin);
 document.getElementById("input-password").addEventListener("keydown", e => {
@@ -52,35 +49,14 @@ async function handleLogin() {
   const password    = document.getElementById("input-password").value;
   const errEl       = document.getElementById("login-error");
   errEl.textContent = "";
-
-  if (!usernameRaw || !password) {
-    errEl.textContent = "Ingresa usuario y contrase\u00f1a.";
-    return;
-  }
-
+  if (!usernameRaw || !password) { errEl.textContent = "Ingresa usuario y contrase\u00f1a."; return; }
   const username = usernameRaw.toLowerCase();
-
   try {
-    // Buscar el documento cuyo campo username coincide
-    const snap = await db.collection("users")
-      .where("username", "==", username)
-      .limit(1)
-      .get();
-
-    if (snap.empty) {
-      errEl.textContent = "Usuario no encontrado.";
-      return;
-    }
-
+    const snap = await db.collection("users").where("username", "==", username).limit(1).get();
+    if (snap.empty) { errEl.textContent = "Usuario no encontrado."; return; }
     const userData = snap.docs[0].data();
-    if (userData.disabled) {
-      errEl.textContent = "Tu cuenta est\u00e1 desactivada.";
-      return;
-    }
-
-    // Autenticar con el email guardado en Firestore
+    if (userData.disabled) { errEl.textContent = "Tu cuenta est\u00e1 desactivada."; return; }
     await auth.signInWithEmailAndPassword(userData.email, password);
-
   } catch(e) {
     console.error("Login error:", e.code, e.message);
     if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
@@ -96,6 +72,67 @@ async function handleLogin() {
 document.getElementById("btn-logout").addEventListener("click", () => auth.signOut());
 
 // ============================================================
+//  MODAL CAMBIAR CONTRASE\u00d1A
+// ============================================================
+document.getElementById("btn-change-pass").addEventListener("click", () => {
+  document.getElementById("modal-pass").classList.remove("hidden");
+  document.getElementById("pass-current").value = "";
+  document.getElementById("pass-new").value = "";
+  document.getElementById("pass-confirm").value = "";
+  document.getElementById("pass-error").textContent = "";
+});
+
+document.getElementById("btn-cancel-pass").addEventListener("click", () => {
+  document.getElementById("modal-pass").classList.add("hidden");
+});
+
+document.getElementById("btn-save-pass").addEventListener("click", async () => {
+  const current  = document.getElementById("pass-current").value;
+  const newPass  = document.getElementById("pass-new").value;
+  const confirm  = document.getElementById("pass-confirm").value;
+  const errEl    = document.getElementById("pass-error");
+  errEl.textContent = "";
+
+  if (!current || !newPass || !confirm) {
+    errEl.textContent = "Completa todos los campos."; return;
+  }
+  if (newPass.length < 6) {
+    errEl.textContent = "La nueva contrase\u00f1a debe tener al menos 6 caracteres."; return;
+  }
+  if (newPass !== confirm) {
+    errEl.textContent = "Las contrase\u00f1as no coinciden."; return;
+  }
+
+  try {
+    // Re-autenticar con la contrase\u00f1a actual
+    const credential = firebase.auth.EmailAuthProvider.credential(currentUser.email, current);
+    await currentUser.reauthenticateWithCredential(credential);
+
+    // Cambiar la contrase\u00f1a
+    await currentUser.updatePassword(newPass);
+
+    document.getElementById("modal-pass").classList.add("hidden");
+    showToast("\u2705 Contrase\u00f1a actualizada correctamente.", "success");
+  } catch(e) {
+    console.error("Change pass error:", e.code);
+    if (e.code === "auth/wrong-password" || e.code === "auth/invalid-credential") {
+      errEl.textContent = "La contrase\u00f1a actual es incorrecta.";
+    } else if (e.code === "auth/weak-password") {
+      errEl.textContent = "La nueva contrase\u00f1a es muy d\u00e9bil.";
+    } else {
+      errEl.textContent = "Error al cambiar. Intenta de nuevo.";
+    }
+  }
+});
+
+// Cerrar modal al hacer clic fuera
+document.getElementById("modal-pass").addEventListener("click", e => {
+  if (e.target === document.getElementById("modal-pass")) {
+    document.getElementById("modal-pass").classList.add("hidden");
+  }
+});
+
+// ============================================================
 //  CARGAR APP
 // ============================================================
 async function loadApp() {
@@ -106,16 +143,12 @@ async function loadApp() {
 async function loadMatches() {
   const snap = await db.collection("matches").orderBy("datetime").get();
   allMatches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
   if (allMatches.length === 0) {
     await seedMatches();
     const snap2 = await db.collection("matches").orderBy("datetime").get();
     allMatches = snap2.docs.map(d => ({ id: d.id, ...d.data() }));
   }
-
-  if (WC_API_KEY !== "TU_WC2026_API_KEY") {
-    syncScoresFromAPI();
-  }
+  if (WC_API_KEY !== "TU_WC2026_API_KEY") syncScoresFromAPI();
 }
 
 async function seedMatches() {
@@ -125,12 +158,9 @@ async function seedMatches() {
     const dt  = new Date(`${m.date}T${m.time}:00-06:00`);
     batch.set(ref, {
       home: m.home, away: m.away, group: m.group, stage: m.stage,
-      datetime:  firebase.firestore.Timestamp.fromDate(dt),
-      dateStr:   m.date,
-      timeStr:   m.time,
-      scoreHome: null, scoreAway: null,
-      status:    "scheduled",
-      apiMatchId: null
+      datetime: firebase.firestore.Timestamp.fromDate(dt),
+      dateStr: m.date, timeStr: m.time,
+      scoreHome: null, scoreAway: null, status: "scheduled", apiMatchId: null
     });
   });
   await batch.commit();
@@ -138,9 +168,7 @@ async function seedMatches() {
 
 async function syncScoresFromAPI() {
   try {
-    const res  = await fetch(`${WC_API_BASE}/matches`, {
-      headers: { Authorization: `Bearer ${WC_API_KEY}` }
-    });
+    const res  = await fetch(`${WC_API_BASE}/matches`, { headers: { Authorization: `Bearer ${WC_API_KEY}` } });
     const data = await res.json();
     const batch = db.batch();
     let changed = 0;
@@ -152,10 +180,8 @@ async function syncScoresFromAPI() {
       if (!local) return;
       if (apiMatch.status === "finished" && local.status !== "finished") {
         batch.update(db.collection("matches").doc(local.id), {
-          scoreHome: apiMatch.home_score ?? null,
-          scoreAway: apiMatch.away_score ?? null,
-          status: "finished",
-          apiMatchId: apiMatch.id
+          scoreHome: apiMatch.home_score ?? null, scoreAway: apiMatch.away_score ?? null,
+          status: "finished", apiMatchId: apiMatch.id
         });
         changed++;
       }
@@ -163,18 +189,14 @@ async function syncScoresFromAPI() {
     if (changed > 0) {
       await batch.commit();
       await recalculateAllPoints();
-      await loadMatches();
-      await loadLeaderboard();
+      await loadMatches(); await loadLeaderboard();
       if (currentView === "home" || currentView === "leaderboard") renderView(currentView);
     }
-  } catch(e) {
-    console.warn("No se pudo sincronizar con API:", e);
-  }
+  } catch(e) { console.warn("No se pudo sincronizar con API:", e); }
 }
 
 async function loadUserPredictions() {
-  const snap = await db.collection("predictions")
-    .where("userId", "==", currentUser.uid).get();
+  const snap = await db.collection("predictions").where("userId", "==", currentUser.uid).get();
   predictions = {};
   snap.docs.forEach(d => {
     const p = d.data();
@@ -260,11 +282,9 @@ function renderHome() {
 function renderMatchCard(m, showPrediction = false) {
   const pred   = predictions[m.id];
   const locked = isMatchLocked(m);
-  const status = m.status;
-  const score  = status === "finished"
+  const score  = m.status === "finished"
     ? `<span class="score-result">${m.scoreHome} - ${m.scoreAway}</span>`
     : `<span class="match-time">${m.timeStr}</span>`;
-
   const predHtml = showPrediction ? `
     <div class="prediction-row ${locked ? "locked" : ""}">
       <input type="number" min="0" max="20" class="score-input" data-match="${m.id}" data-side="home"
@@ -276,28 +296,24 @@ function renderMatchCard(m, showPrediction = false) {
         ? `<button class="btn-save-pred" data-match="${m.id}">\u2713 Guardar</button>`
         : `<span class="lock-label">\uD83D\uDD12 Cerrado</span>`}
     </div>` : "";
-
   const pts = (pred && m.status === "finished")
     ? `<span class="points-badge pts-${calculatePoints(pred, { home: m.scoreHome, away: m.scoreAway })}">${calculatePoints(pred, { home: m.scoreHome, away: m.scoreAway })} pts</span>`
     : "";
-
   return `
-  <div class="match-card ${status}">
+  <div class="match-card ${m.status}">
     <div class="match-group-badge" style="background:${GROUP_COLORS[m.group] || '#444'}">Grupo ${m.group}</div>
     <div class="match-teams">
       <div class="team home"><span class="flag">${getFlag(m.home)}</span><span class="team-name">${m.home}</span></div>
       <div class="match-center">${score}<span class="vs-label">VS</span></div>
       <div class="team away"><span class="team-name">${m.away}</span><span class="flag">${getFlag(m.away)}</span></div>
     </div>
-    ${pts}
-    ${predHtml}
+    ${pts}${predHtml}
   </div>`;
 }
 
 function isMatchLocked(m) {
-  const now     = new Date();
   const kickoff = m.datetime?.toDate ? m.datetime.toDate() : new Date(m.datetime);
-  return now >= new Date(kickoff.getTime() - 60 * 60 * 1000) || m.status === "finished";
+  return new Date() >= new Date(kickoff.getTime() - 60 * 60 * 1000) || m.status === "finished";
 }
 
 function addPredictionListeners(container) {
