@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin &mdash; Quiniela Mundial 2026</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x2699;</text></svg>" />
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+
+<!-- Header -->
+<header class="admin-header">
+  <div class="admin-brand">
+    QUINIELA<span>26</span>
+    <small>&#x2699; Panel Administrador</small>
+  </div>
+  <div class="admin-user">
+    Bienvenido, <strong id="admin-name"></strong>
+    <button class="btn-admin-logout" id="btn-admin-logout">Salir</button>
+  </div>
+</header>
+
+<!-- Tabs -->
+<div class="admin-tabs">
+  <button class="admin-tab active" data-tab="users">&#x1F465; Usuarios</button>
+  <button class="admin-tab" data-tab="matches">&#x26BD; Partidos</button>
+  <button class="admin-tab" data-tab="stats">&#x1F4CA; Resumen</button>
+</div>
+
+<div class="admin-content">
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL: USUARIOS
+       ═══════════════════════════════════════════════════ -->
+  <div class="admin-panel" id="panel-users">
+    <h2>Gesti&oacute;n de Usuarios</h2>
+    <div class="toolbar">
+      <button class="btn-primary" id="btn-new-user">+ Nuevo Usuario</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Usuario</th>
+            <th>Email</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th>Puntos</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="users-table-body">
+          <tr><td colspan="7" style="text-align:center;padding:2rem;color:#adb5bd">Cargando&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL: PARTIDOS
+       ═══════════════════════════════════════════════════ -->
+  <div class="admin-panel hidden" id="panel-matches">
+    <h2>Gesti&oacute;n de Partidos</h2>
+    <div class="toolbar">
+      <button class="btn-primary" id="btn-new-match">+ Nuevo Partido</button>
+      <button class="btn-secondary" id="btn-sync-api">&#x1F504; Sincronizar API</button>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Fecha / Hora</th>
+            <th>Partido</th>
+            <th>Fase</th>
+            <th>Estado</th>
+            <th>Resultado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="matches-table-body">
+          <tr><td colspan="6" style="text-align:center;padding:2rem;color:#adb5bd">Cargando&hellip;</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════
+       PANEL: STATS / RESUMEN
+       ═══════════════════════════════════════════════════ -->
+  <div class="admin-panel hidden" id="panel-stats">
+    <h2>Resumen del Torneo</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem">
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:1.25rem;text-align:center">
+        <div id="stat-users" style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:#f4d03f">-</div>
+        <div style="font-size:0.78rem;color:#adb5bd;text-transform:uppercase;letter-spacing:1px">Usuarios activos</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:1.25rem;text-align:center">
+        <div id="stat-matches-done" style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:#06d6a0">-</div>
+        <div style="font-size:0.78rem;color:#adb5bd;text-transform:uppercase;letter-spacing:1px">Partidos jugados</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:1.25rem;text-align:center">
+        <div id="stat-predictions" style="font-family:'Bebas Neue',sans-serif;font-size:2.5rem;color:#e63946">-</div>
+        <div style="font-size:0.78rem;color:#adb5bd;text-transform:uppercase;letter-spacing:1px">Predicciones totales</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:1.25rem;text-align:center">
+        <div id="stat-leader" style="font-family:'Bebas Neue',sans-serif;font-size:1.2rem;color:#f4d03f">-</div>
+        <div style="font-size:0.78rem;color:#adb5bd;text-transform:uppercase;letter-spacing:1px">&#x1F947; L&iacute;der actual</div>
+      </div>
+    </div>
+    <button class="btn-secondary" onclick="loadStats()">&#x1F504; Actualizar estad&iacute;sticas</button>
+  </div>
+
+</div><!-- /admin-content -->
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL: USUARIO
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="user-modal">
+  <div class="modal-box">
+    <h3 id="modal-title">Nuevo Usuario</h3>
+    <form id="user-form" onsubmit="return false">
+      <input type="hidden" id="user-uid" />
+
+      <div class="form-field">
+        <label>Nombre completo</label>
+        <input type="text" id="user-display-name" placeholder="Pamela Abarca" required />
+      </div>
+      <div class="form-field">
+        <label>Usuario (para login)</label>
+        <input type="text" id="user-username" placeholder="pamela.abarca" required />
+      </div>
+      <div class="form-field">
+        <label>Email</label>
+        <input type="email" id="user-email" placeholder="pamela@ogilvy.com" required />
+      </div>
+      <div class="form-field">
+        <label>Contrase&ntilde;a inicial</label>
+        <input type="text" id="user-password" placeholder="Mundial2026!" />
+      </div>
+      <label class="form-check">
+        <input type="checkbox" id="user-is-admin" />
+        Es administrador
+      </label>
+      <label class="form-check">
+        <input type="checkbox" id="user-disabled" />
+        Cuenta desactivada
+      </label>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-cancel-user" type="button">Cancelar</button>
+        <button class="btn-primary" type="submit">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODAL: PARTIDO
+     ═══════════════════════════════════════════════════════ -->
+<div class="modal-overlay hidden" id="match-modal">
+  <div class="modal-box">
+    <h3>Partido</h3>
+    <form id="match-form" onsubmit="return false">
+      <input type="hidden" id="match-uid" />
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+        <div class="form-field">
+          <label>Equipo Local</label>
+          <input type="text" id="match-home" placeholder="Brasil" required />
+        </div>
+        <div class="form-field">
+          <label>Equipo Visitante</label>
+          <input type="text" id="match-away" placeholder="Argentina" required />
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+        <div class="form-field">
+          <label>Grupo</label>
+          <input type="text" id="match-group" placeholder="A" maxlength="2" />
+        </div>
+        <div class="form-field">
+          <label>Fase</label>
+          <select id="match-stage">
+            <option value="grupo">Fase de Grupos</option>
+            <option value="octavos">Octavos de Final</option>
+            <option value="cuartos">Cuartos de Final</option>
+            <option value="semis">Semifinales</option>
+            <option value="tercero">3er Puesto</option>
+            <option value="final">Final</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-field">
+        <label>Fecha y Hora (Hora El Salvador)</label>
+        <input type="datetime-local" id="match-datetime" required />
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" id="btn-cancel-match" type="button">Cancelar</button>
+        <button class="btn-primary" type="submit">Guardar Partido</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="admin-toast"></div>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="../js/firebase-config.js"></script>
+<script src="../js/matches-data.js"></script>
+<script src="../js/admin.js"></script>
+
+<script>
+// Stats panel
+async function loadStats() {
+  const usersSnap   = await db.collection("users").where("disabled","==",false).get();
+  const matchesSnap = await db.collection("matches").where("status","==","finished").get();
+  const predsSnap   = await db.collection("predictions").get();
+
+  document.getElementById("stat-users").textContent = usersSnap.size;
+  document.getElementById("stat-matches-done").textContent = matchesSnap.size;
+  document.getElementById("stat-predictions").textContent = predsSnap.size;
+
+  const users = usersSnap.docs.map(d => d.data()).sort((a,b) => (b.totalPoints||0)-(a.totalPoints||0));
+  if (users.length) {
+    document.getElementById("stat-leader").textContent =
+      `${users[0].displayName || users[0].username} (${users[0].totalPoints || 0} pts)`;
+  }
+}
+
+document.querySelector('[data-tab="stats"]').addEventListener("click", loadStats);
+</script>
+
+</body>
+</html>
