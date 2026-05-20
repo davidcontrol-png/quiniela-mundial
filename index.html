@@ -9,20 +9,15 @@
 </head>
 <body>
 
-<!-- ════════════════════════════════════════════════════════
-     PANTALLA: LOGIN
-     ════════════════════════════════════════════════════════ -->
+<!-- LOGIN -->
 <div id="screen-login">
   <div class="login-card">
     <div class="login-logo">
       <span class="ball">&#x26BD;</span>
-      <div>
-        <div class="brand">QUINIELA<span>26</span></div>
-      </div>
+      <div><div class="brand">QUINIELA<span>26</span></div></div>
     </div>
     <p class="login-subtitle">Ogilvy El Salvador &bull; Copa Mundial FIFA</p>
     <div class="login-divider"></div>
-
     <div class="login-field">
       <label for="input-username">Usuario</label>
       <input type="text" id="input-username" placeholder="tu.nombre" autocomplete="username" />
@@ -31,58 +26,48 @@
       <label for="input-password">Contrase&ntilde;a</label>
       <input type="password" id="input-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" />
     </div>
-
     <button class="btn-login-main" id="btn-login">INGRESAR &rarr;</button>
     <p id="login-error"></p>
   </div>
 </div>
 
-<!-- ════════════════════════════════════════════════════════
-     PANTALLA: APP PRINCIPAL
-     ════════════════════════════════════════════════════════ -->
+<!-- APP PRINCIPAL -->
 <div id="screen-app" class="hidden">
 
-  <!-- Header -->
   <header class="app-header">
     <div class="header-brand">QUINIELA<span>26</span></div>
     <div class="header-user">
       <div class="avatar" id="user-avatar">?</div>
       <span id="user-display-name"></span>
+      <button class="btn-change-pass" id="btn-change-pass" title="Cambiar contrase&ntilde;a">&#x1F512;</button>
       <button class="btn-logout" id="btn-logout">Salir</button>
     </div>
   </header>
 
-  <!-- Nav -->
   <nav class="app-nav">
     <button class="nav-btn active" data-view="home">
-      <span class="nav-icon">&#x26BD;</span>
-      Hoy
+      <span class="nav-icon">&#x26BD;</span>Hoy
     </button>
     <button class="nav-btn" data-view="predictions">
-      <span class="nav-icon">&#x1F3AF;</span>
-      Predicciones
+      <span class="nav-icon">&#x1F3AF;</span>Predicciones
     </button>
     <button class="nav-btn" data-view="leaderboard">
-      <span class="nav-icon">&#x1F3C6;</span>
-      Tabla
+      <span class="nav-icon">&#x1F3C6;</span>Tabla
     </button>
   </nav>
 
-  <!-- Contenido -->
   <main class="app-content">
 
-    <!-- VISTA: HOME -->
+    <!-- HOME -->
     <section id="view-home" class="view-section">
       <div class="view-header">
         <div class="view-title">Partidos del D&iacute;a</div>
         <div class="view-subtitle">Copa Mundial FIFA 2026 &bull; Hora El Salvador</div>
       </div>
-      <div id="matches-today">
-        <p class="empty-state">Cargando partidos&hellip;</p>
-      </div>
+      <div id="matches-today"><p class="empty-state">Cargando partidos&hellip;</p></div>
     </section>
 
-    <!-- VISTA: PREDICCIONES -->
+    <!-- PREDICCIONES -->
     <section id="view-predictions" class="view-section hidden">
       <div class="view-header">
         <div class="view-title">Mis Predicciones</div>
@@ -92,42 +77,26 @@
         <span class="search-icon">&#x1F50D;</span>
         <input type="text" id="pred-search" placeholder="Buscar equipo&hellip;" />
       </div>
-      <div id="predictions-list">
-        <p class="empty-state">Cargando&hellip;</p>
-      </div>
+      <div id="predictions-list"><p class="empty-state">Cargando&hellip;</p></div>
     </section>
 
-    <!-- VISTA: LEADERBOARD -->
+    <!-- LEADERBOARD -->
     <section id="view-leaderboard" class="view-section hidden">
       <div class="view-header">
         <div class="view-title">Tabla de Puntos</div>
         <div class="view-subtitle">Actualizaci&oacute;n autom&aacute;tica al terminar cada partido</div>
       </div>
-
       <div class="scoring-legend">
-        <div class="legend-item">
-          <div class="legend-dot" style="background:#adb5bd"></div>
-          0 pts &mdash; No adivina
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background:#f4d03f"></div>
-          1 pt &mdash; Acierta resultado (G/E/P)
-        </div>
-        <div class="legend-item">
-          <div class="legend-dot" style="background:#06d6a0"></div>
-          3 pts &mdash; Marcador exacto
-        </div>
+        <div class="legend-item"><div class="legend-dot" style="background:#adb5bd"></div>0 pts &mdash; No adivina</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f4d03f"></div>1 pt &mdash; Acierta G/E/P</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#06d6a0"></div>3 pts &mdash; Marcador exacto</div>
       </div>
-
-      <div style="overflow-x:auto; background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.1); border-radius:12px;">
+      <div style="overflow-x:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
         <table class="leaderboard-table">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Nombre</th>
-              <th>Puntos</th>
-              <th title="Resultados exactos">&#x1F3AF; Exactos</th>
-              <th title="Resultado correcto">&#x2714;&#xFE0F; Resultado</th>
+              <th>#</th><th>Nombre</th><th>Puntos</th>
+              <th title="Exactos">&#x1F3AF;</th><th title="Resultado">&#x2714;&#xFE0F;</th>
             </tr>
           </thead>
           <tbody id="leaderboard-body">
@@ -140,32 +109,40 @@
   </main>
 </div>
 
+<!-- MODAL CAMBIAR CONTRASE&Ntilde;A -->
+<div class="modal-overlay hidden" id="modal-pass">
+  <div class="modal-box">
+    <h3>&#x1F512; Cambiar Contrase&ntilde;a</h3>
+    <div class="form-field">
+      <label>Contrase&ntilde;a actual</label>
+      <input type="password" id="pass-current" placeholder="Tu contrase&ntilde;a actual" />
+    </div>
+    <div class="form-field">
+      <label>Nueva contrase&ntilde;a</label>
+      <input type="password" id="pass-new" placeholder="M&iacute;nimo 6 caracteres" />
+    </div>
+    <div class="form-field">
+      <label>Confirmar nueva contrase&ntilde;a</label>
+      <input type="password" id="pass-confirm" placeholder="Repite la nueva contrase&ntilde;a" />
+    </div>
+    <p id="pass-error" class="pass-error"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" id="btn-cancel-pass">Cancelar</button>
+      <button class="btn-save-modal" id="btn-save-pass">Guardar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- ════════════════════════════════════════════════════════
-     FIREBASE SDK
-     ════════════════════════════════════════════════════════ -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
 <script src="js/firebase-config.js"></script>
 <script src="js/matches-data.js"></script>
 <script src="js/app.js"></script>
-
-<script>
-  // Inicializar avatar con inicial del nombre
-  auth.onAuthStateChanged(async user => {
-    if (user) {
-      const snap = await db.collection("users").doc(user.uid).get();
-      if (snap.exists) {
-        const name = snap.data().displayName || snap.data().username || "?";
-        document.getElementById("user-avatar").textContent = name.charAt(0).toUpperCase();
-      }
-    }
-  });
-</script>
 
 </body>
 </html>
