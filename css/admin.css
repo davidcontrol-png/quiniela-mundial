@@ -332,3 +332,27 @@ code {
   font-size: 0.85em;
   font-family: monospace;
 }
+
+/* ── Tarjetas de estadísticas ─────────────────────────────── */
+.stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-top: 3px solid var(--red);
+  padding: 1.25rem;
+  text-align: center;
+}
+
+.stat-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 2.2rem;
+  color: var(--gold);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.stat-label {
+  font-size: 0.72rem;
+  color: var(--grey);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
