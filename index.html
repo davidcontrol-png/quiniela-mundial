@@ -3,29 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Quiniela Mundial 2026 &mdash; Ogilvy El Salvador</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#x26BD;</text></svg>" />
+  <title>Quiniela Ogilvy 2026 &mdash; Ogilvy El Salvador</title>
+  <link rel="icon" href="logo_quiniela.png" />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
 <!-- LOGIN -->
 <div id="screen-login">
+
+  <!-- Panel izquierdo rojo -->
+  <div class="login-logo-side">
+    <img src="logo_quiniela.png" class="login-logo-img" alt="Quiniela Ogilvy 2026" />
+    <div class="brand-sub">Copa Mundial FIFA 2026 &bull; El Salvador</div>
+  </div>
+
+  <!-- Panel derecho negro -->
   <div class="login-card">
-    <div class="login-logo">
-      <span class="ball">&#x26BD;</span>
-      <div><div class="brand">QUINIELA<span>26</span></div></div>
-    </div>
-    <p class="login-subtitle">Ogilvy El Salvador &bull; Copa Mundial FIFA</p>
+    <div class="login-eyebrow">Bienvenido</div>
+    <div class="login-headline">INGRESA<br>A LA<br>QUINIELA</div>
     <div class="login-divider"></div>
+
     <div class="login-field">
       <label for="input-username">Usuario</label>
-      <input type="text" id="input-username" placeholder="tu.nombre" autocomplete="username" />
+      <input type="text" id="input-username" placeholder="nombre.apellido" autocomplete="username" />
     </div>
     <div class="login-field">
       <label for="input-password">Contrase&ntilde;a</label>
       <input type="password" id="input-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" />
     </div>
+
     <button class="btn-login-main" id="btn-login">INGRESAR &rarr;</button>
     <p id="login-error"></p>
   </div>
@@ -35,7 +42,10 @@
 <div id="screen-app" class="hidden">
 
   <header class="app-header">
-    <div class="header-brand">QUINIELA<span>26</span></div>
+    <div class="header-brand">
+      <img src="logo_quiniela.png" class="header-logo" alt="Quiniela Ogilvy 2026" />
+      <span class="header-brand-text">Quiniela <span>Ogilvy</span> 2026</span>
+    </div>
     <div class="header-user">
       <div class="avatar" id="user-avatar">?</div>
       <span id="user-display-name"></span>
@@ -58,7 +68,6 @@
 
   <main class="app-content">
 
-    <!-- HOME -->
     <section id="view-home" class="view-section">
       <div class="view-header">
         <div class="view-title">Partidos del D&iacute;a</div>
@@ -67,7 +76,6 @@
       <div id="matches-today"><p class="empty-state">Cargando partidos&hellip;</p></div>
     </section>
 
-    <!-- PREDICCIONES -->
     <section id="view-predictions" class="view-section hidden">
       <div class="view-header">
         <div class="view-title">Mis Predicciones</div>
@@ -80,27 +88,23 @@
       <div id="predictions-list"><p class="empty-state">Cargando&hellip;</p></div>
     </section>
 
-    <!-- LEADERBOARD -->
     <section id="view-leaderboard" class="view-section hidden">
       <div class="view-header">
         <div class="view-title">Tabla de Puntos</div>
         <div class="view-subtitle">Actualizaci&oacute;n autom&aacute;tica al terminar cada partido</div>
       </div>
       <div class="scoring-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#adb5bd"></div>0 pts &mdash; No adivina</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f4d03f"></div>1 pt &mdash; Acierta G/E/P</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#06d6a0"></div>3 pts &mdash; Marcador exacto</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#444"></div>0 pts &mdash; No adivina</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D4AF37"></div>1 pt &mdash; Acierta G/E/P</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fff"></div>3 pts &mdash; Marcador exacto</div>
       </div>
-      <div style="overflow-x:auto;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:12px;">
+      <div style="overflow-x:auto;border:1px solid #2a2a2a;">
         <table class="leaderboard-table">
           <thead>
-            <tr>
-              <th>#</th><th>Nombre</th><th>Puntos</th>
-              <th title="Exactos">&#x1F3AF;</th><th title="Resultado">&#x2714;&#xFE0F;</th>
-            </tr>
+            <tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Exactos</th><th>Resultado</th></tr>
           </thead>
           <tbody id="leaderboard-body">
-            <tr><td colspan="5" style="text-align:center;padding:2rem;color:#adb5bd">Cargando&hellip;</td></tr>
+            <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Cargando&hellip;</td></tr>
           </tbody>
         </table>
       </div>
@@ -109,10 +113,10 @@
   </main>
 </div>
 
-<!-- MODAL CAMBIAR CONTRASE&Ntilde;A -->
+<!-- MODAL CONTRASE&Ntilde;A -->
 <div class="modal-overlay hidden" id="modal-pass">
   <div class="modal-box">
-    <h3>&#x1F512; Cambiar Contrase&ntilde;a</h3>
+    <h3>Cambiar Contrase&ntilde;a</h3>
     <div class="form-field">
       <label>Contrase&ntilde;a actual</label>
       <input type="password" id="pass-current" placeholder="Tu contrase&ntilde;a actual" />
@@ -133,10 +137,8 @@
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast" id="toast"></div>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
