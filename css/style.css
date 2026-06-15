@@ -941,3 +941,21 @@ body::after {
   border-radius: 50%;
   padding: 2px;
 }
+
+/* ── Selector de semana ──────────────────────────────────── */
+.week-selector {
+  margin-bottom: 1rem;
+}
+.week-selector select {
+  background: var(--black-card);
+  border: 1px solid var(--black-line);
+  color: var(--white);
+  padding: .6rem 1rem;
+  border-radius: 6px;
+  font-family: var(--font-body);
+  font-size: .85rem;
+  width: 100%;
+  max-width: 480px;
+  cursor: pointer;
+}
+.week-selector select:focus { outline: none; border-color: var(--red); }
