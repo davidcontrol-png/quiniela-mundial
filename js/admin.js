@@ -405,15 +405,20 @@ async function renderWeek() {
   tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:1.5rem;color:#888">Calculando\u2026</td></tr>`;
 
   // Partidos de la semana
+  // Traer todos los finalizados y filtrar por fecha en cliente
   const matchesSnap = await db.collection("matches")
-    .where("dateStr", ">=", week.start)
-    .where("dateStr", "<=", week.end)
     .where("status", "==", "finished")
     .get();
 
-  const weekMatchIds = new Set(matchesSnap.docs.map(d => d.id));
+  const weekMatchIds = new Set();
   const matchMap     = {};
-  matchesSnap.docs.forEach(d => { matchMap[d.id] = d.data(); });
+  matchesSnap.docs.forEach(d => {
+    const m = d.data();
+    if (m.dateStr >= week.start && m.dateStr <= week.end) {
+      weekMatchIds.add(d.id);
+      matchMap[d.id] = m;
+    }
+  });
 
   if (weekMatchIds.size === 0) {
     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">No hay partidos finalizados esta semana.</td></tr>`;
