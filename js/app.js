@@ -512,20 +512,25 @@ async function renderWeekTable(week) {
   if (!tc) return;
   tc.innerHTML = `<p class="empty-state">Calculando&hellip;</p>`;
 
+  // Traer todos los partidos finalizados y filtrar por fecha en cliente
   const matchesSnap = await db.collection("matches")
-    .where("dateStr", ">=", week.start)
-    .where("dateStr", "<=", week.end)
     .where("status", "==", "finished")
     .get();
 
-  if (matchesSnap.empty) {
+  const weekMatchIds = new Set();
+  const matchMap     = {};
+  matchesSnap.docs.forEach(d => {
+    const m = d.data();
+    if (m.dateStr >= week.start && m.dateStr <= week.end) {
+      weekMatchIds.add(d.id);
+      matchMap[d.id] = m;
+    }
+  });
+
+  if (weekMatchIds.size === 0) {
     tc.innerHTML = `<p class="empty-state">No hay partidos finalizados en ${week.label}.</p>`;
     return;
   }
-
-  const weekMatchIds = new Set(matchesSnap.docs.map(d => d.id));
-  const matchMap     = {};
-  matchesSnap.docs.forEach(d => { matchMap[d.id] = d.data(); });
 
   const predsSnap = await db.collection("predictions").get();
   const usersSnap = await db.collection("users").where("disabled", "==", false).get();
