@@ -21,10 +21,12 @@
 </header>
 
 <div class="admin-tabs">
-  <button class="admin-tab active" data-tab="users">&#x1F465; Usuarios</button>
-  <button class="admin-tab" data-tab="matches">&#x26BD; Partidos</button>
-  <button class="admin-tab" data-tab="actividad">&#x1F4CA; Actividad</button>
-  <button class="admin-tab" data-tab="stats">&#x1F3C6; Resumen</button>
+  <button class="admin-tab active"  data-tab="users">&#x1F465; Usuarios</button>
+  <button class="admin-tab"         data-tab="matches">&#x26BD; Partidos</button>
+  <button class="admin-tab"         data-tab="predicciones">&#x1F4CB; Predicciones</button>
+  <button class="admin-tab"         data-tab="semanal">&#x1F4C5; Semanal</button>
+  <button class="admin-tab"         data-tab="actividad">&#x1F4CA; Actividad</button>
+  <button class="admin-tab"         data-tab="stats">&#x1F3C6; Resumen</button>
 </div>
 
 <div class="admin-content">
@@ -35,6 +37,10 @@
     <div class="toolbar">
       <button class="btn-primary" id="btn-new-user">+ Nuevo Usuario</button>
     </div>
+    <p style="font-size:.8rem;color:#888;margin-bottom:.75rem">
+      Para resetear contrase&ntilde;a: usa el bot&oacute;n <strong>Reset Pass</strong> o ve directamente a
+      <strong>Firebase Console &rarr; Authentication &rarr; edita el usuario &rarr; cambia la contrase&ntilde;a</strong>.
+    </p>
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
@@ -65,15 +71,55 @@
     </div>
   </div>
 
+  <!-- PREDICCIONES POR PARTIDO -->
+  <div class="admin-panel hidden" id="panel-predicciones">
+    <h2>Predicciones por Partido</h2>
+    <p style="font-size:.82rem;color:#888;margin-bottom:1rem">Selecciona un partido finalizado para ver qu&eacute; predijo cada usuario.</p>
+    <div style="margin-bottom:1rem">
+      <select id="pred-match-select" style="background:#1c1c1c;border:1px solid #333;color:#fff;padding:.6rem 1rem;border-radius:6px;font-size:.85rem;width:100%;max-width:600px">
+        <option value="">-- Selecciona un partido --</option>
+      </select>
+    </div>
+    <div id="pred-result-display" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#E3262B;margin-bottom:1rem;letter-spacing:1px"></div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>Usuario</th><th style="text-align:center">Predicci&oacute;n</th><th style="text-align:center">Puntos</th><th style="text-align:center">Resultado</th></tr>
+        </thead>
+        <tbody id="pred-table-body">
+          <tr><td colspan="4" style="text-align:center;padding:2rem;color:#888">Selecciona un partido arriba</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PUNTOS SEMANALES -->
+  <div class="admin-panel hidden" id="panel-semanal">
+    <h2>Puntos Semanales</h2>
+    <p style="font-size:.82rem;color:#888;margin-bottom:1rem">Ranking de lunes a domingo de cada semana del Mundial.</p>
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+      <select id="week-select" style="background:#1c1c1c;border:1px solid #333;color:#fff;padding:.6rem 1rem;border-radius:6px;font-size:.85rem">
+        <option value="">-- Selecciona semana --</option>
+      </select>
+      <span id="semanal-match-count" style="font-size:.8rem;color:#888"></span>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr><th>#</th><th>Nombre</th><th>Pts Semana</th><th>&#x1F3AF; Exactos</th><th>&#x2714;&#xFE0F; Resultado</th></tr>
+        </thead>
+        <tbody id="semanal-table-body">
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Selecciona una semana</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- ACTIVIDAD -->
   <div class="admin-panel hidden" id="panel-actividad">
     <h2>Actividad de Usuarios</h2>
-    <p style="font-size:0.82rem;color:#888;margin-bottom:1.25rem;letter-spacing:0.5px">
-      Cu&aacute;ntas predicciones ha registrado cada usuario. Actualiza al cambiar a esta pesta&ntilde;a.
-    </p>
-
-    <!-- Tarjetas resumen -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:0.75rem;margin-bottom:1.5rem">
+    <p style="font-size:.82rem;color:#888;margin-bottom:1.25rem">Cu&aacute;ntas predicciones ha registrado cada usuario.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem">
       <div class="stat-card">
         <div id="stat-act-total" class="stat-num">-</div>
         <div class="stat-label">Usuarios totales</div>
@@ -87,20 +133,13 @@
         <div class="stat-label">Sin actividad</div>
       </div>
     </div>
-
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr>
-            <th>#</th>
-            <th>Nombre</th>
-            <th style="text-align:center">Predicciones</th>
-            <th>Participaci&oacute;n</th>
-            <th>Estado</th>
-          </tr>
+          <tr><th>#</th><th>Nombre</th><th style="text-align:center">Predicciones</th><th>Participaci&oacute;n</th><th>Estado</th></tr>
         </thead>
         <tbody id="actividad-table-body">
-          <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Selecciona esta pesta&ntilde;a para cargar&hellip;</td></tr>
+          <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Cargando&hellip;</td></tr>
         </tbody>
       </table>
     </div>
@@ -109,7 +148,7 @@
   <!-- STATS -->
   <div class="admin-panel hidden" id="panel-stats">
     <h2>Resumen del Torneo</h2>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:2rem">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem;margin-bottom:1.5rem">
       <div class="stat-card">
         <div id="stat-users" class="stat-num">-</div>
         <div class="stat-label">Usuarios activos</div>
@@ -127,10 +166,15 @@
         <div class="stat-label">&#x1F947; L&iacute;der actual</div>
       </div>
     </div>
-    <button class="btn-secondary" onclick="loadStats()">&#x1F504; Actualizar</button>
+    <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+      <button class="btn-secondary" onclick="loadStats()">&#x1F504; Actualizar estad&iacute;sticas</button>
+      <button class="btn-secondary" id="btn-recalc-all" style="border-color:#E3262B;color:#E3262B">
+        &#x26A0;&#xFE0F; Recalcular todos los puntos
+      </button>
+    </div>
   </div>
 
-</div>
+</div><!-- /admin-content -->
 
 <!-- MODAL USUARIO -->
 <div class="modal-overlay hidden" id="user-modal">
@@ -138,9 +182,9 @@
     <h3 id="modal-title">Nuevo Usuario</h3>
     <form id="user-form" onsubmit="return false">
       <input type="hidden" id="user-uid" />
-      <div class="form-field"><label>Nombre completo</label><input type="text" id="user-display-name" required /></div>
-      <div class="form-field"><label>Usuario (para login)</label><input type="text" id="user-username" required /></div>
-      <div class="form-field"><label>Email</label><input type="email" id="user-email" required /></div>
+      <div class="form-field"><label>Nombre completo</label><input type="text" id="user-display-name" placeholder="Pamela Abarca" required /></div>
+      <div class="form-field"><label>Usuario (para login)</label><input type="text" id="user-username" placeholder="pamela.abarca" required /></div>
+      <div class="form-field"><label>Email</label><input type="email" id="user-email" placeholder="pamela@ogilvy.sv" required /></div>
       <div class="form-field"><label>Contrase&ntilde;a inicial</label><input type="text" id="user-password" placeholder="Mundial2026!" /></div>
       <label class="form-check"><input type="checkbox" id="user-is-admin" /> Es administrador</label>
       <label class="form-check"><input type="checkbox" id="user-disabled" /> Cuenta desactivada</label>
@@ -158,11 +202,11 @@
     <h3>Partido</h3>
     <form id="match-form" onsubmit="return false">
       <input type="hidden" id="match-uid" />
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
         <div class="form-field"><label>Equipo Local</label><input type="text" id="match-home" required /></div>
         <div class="form-field"><label>Equipo Visitante</label><input type="text" id="match-away" required /></div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
         <div class="form-field"><label>Grupo</label><input type="text" id="match-group" maxlength="2" /></div>
         <div class="form-field"><label>Fase</label>
           <select id="match-stage">
