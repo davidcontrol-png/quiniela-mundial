@@ -329,6 +329,7 @@ function renderView(view) {
   if (view === "home")        renderHome();
   if (view === "predictions") renderPredictions();
   if (view === "leaderboard") renderLeaderboard();
+  if (view === "weekly")       renderWeeklyPoints();
 }
 
 // ============================================================
@@ -469,3 +470,110 @@ function showToast(msg, type = "info") {
 setInterval(() => {
   syncScoresFromOpenFootball();
 }, 15 * 60 * 1000);
+
+// ============================================================
+//  PUNTOS SEMANALES — vista de usuario
+// ============================================================
+async function renderWeeklyPoints() {
+  const container = document.getElementById("weekly-list");
+  if (!container) return;
+
+  // Detectar semana actual
+  const today = new Date().toLocaleDateString("en-CA", { timeZone: "America/El_Salvador" });
+  const weeks = [
+    { label: "Semana 1", start: "2026-06-09", end: "2026-06-15" },
+    { label: "Semana 2", start: "2026-06-16", end: "2026-06-22" },
+    { label: "Semana 3", start: "2026-06-23", end: "2026-06-29" },
+    { label: "Semana 4", start: "2026-06-30", end: "2026-07-06" },
+    { label: "Semana 5", start: "2026-07-07", end: "2026-07-13" },
+    { label: "Semana 6", start: "2026-07-14", end: "2026-07-19" },
+  ];
+
+  const currentWeek = weeks.find(w => today >= w.start && today <= w.end) || weeks[0];
+
+  // Selector de semana
+  const selHtml = `
+    <div class="week-selector">
+      <select id="weekly-week-select" onchange="changeWeek(this.value)">
+        ${weeks.map(w => `<option value='${JSON.stringify(w)}' ${w.label === currentWeek.label ? "selected" : ""}>${w.label} (${w.start} al ${w.end})</option>`).join("")}
+      </select>
+    </div>`;
+  container.innerHTML = selHtml + `<div id="weekly-table-container"><p class="empty-state">Calculando&hellip;</p></div>`;
+  await renderWeekTable(currentWeek);
+}
+
+async function changeWeek(val) {
+  const week = JSON.parse(val);
+  await renderWeekTable(week);
+}
+
+async function renderWeekTable(week) {
+  const tc = document.getElementById("weekly-table-container");
+  if (!tc) return;
+  tc.innerHTML = `<p class="empty-state">Calculando&hellip;</p>`;
+
+  const matchesSnap = await db.collection("matches")
+    .where("dateStr", ">=", week.start)
+    .where("dateStr", "<=", week.end)
+    .where("status", "==", "finished")
+    .get();
+
+  if (matchesSnap.empty) {
+    tc.innerHTML = `<p class="empty-state">No hay partidos finalizados en ${week.label}.</p>`;
+    return;
+  }
+
+  const weekMatchIds = new Set(matchesSnap.docs.map(d => d.id));
+  const matchMap     = {};
+  matchesSnap.docs.forEach(d => { matchMap[d.id] = d.data(); });
+
+  const predsSnap = await db.collection("predictions").get();
+  const usersSnap = await db.collection("users").where("disabled", "==", false).get();
+
+  const weekPoints = {};
+  predsSnap.docs.forEach(pd => {
+    const p = pd.data();
+    if (!weekMatchIds.has(p.matchId)) return;
+    const m = matchMap[p.matchId];
+    if (!m) return;
+    const pts = calculatePoints(
+      { home: p.predictedHome, away: p.predictedAway },
+      { home: m.scoreHome, away: m.scoreAway }
+    );
+    if (!weekPoints[p.userId]) weekPoints[p.userId] = { pts: 0, exact: 0, result: 0 };
+    weekPoints[p.userId].pts += pts;
+    if (pts === 3) weekPoints[p.userId].exact++;
+    if (pts === 1) weekPoints[p.userId].result++;
+  });
+
+  const rows = usersSnap.docs.map(d => {
+    const u = d.data();
+    const w = weekPoints[d.id] || { pts: 0, exact: 0, result: 0 };
+    return { uid: d.id, name: u.displayName || u.username, ...w };
+  }).sort((a, b) => b.pts - a.pts || b.exact - a.exact);
+
+  tc.innerHTML = `
+    <p style="font-size:.75rem;color:var(--grey);margin-bottom:.75rem;letter-spacing:1px">
+      ${matchesSnap.size} partido(s) jugado(s) &bull; ${week.label}
+    </p>
+    <div style="overflow-x:auto;border:1px solid var(--black-line);border-radius:8px">
+      <table class="leaderboard-table">
+        <thead>
+          <tr><th>#</th><th>Nombre</th><th>Pts</th><th>Exactos</th><th>Resultado</th></tr>
+        </thead>
+        <tbody>
+          ${rows.map((u, i) => {
+            const medal  = i === 0 ? "\uD83E\uDD47" : i === 1 ? "\uD83E\uDD48" : i === 2 ? "\uD83E\uDD49" : `${i+1}`;
+            const isMe   = u.uid === currentUser.uid;
+            return `<tr class="${isMe ? "my-row" : ""}">
+              <td class="rank-cell">${medal}</td>
+              <td class="name-cell">${u.name}${isMe ? " <span class='you-badge'>T\u00fa</span>" : ""}</td>
+              <td class="pts-cell">${u.pts}</td>
+              <td class="detail-cell">\uD83C\uDFAF ${u.exact}</td>
+              <td class="detail-cell">\u2714\uFE0F ${u.result}</td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>`;
+}
