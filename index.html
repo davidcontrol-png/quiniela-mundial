@@ -64,6 +64,9 @@
     <button class="nav-btn" data-view="leaderboard">
       <span class="nav-icon">&#x1F3C6;</span>Tabla
     </button>
+    <button class="nav-btn" data-view="weekly">
+      <span class="nav-icon">&#x1F4C5;</span>Semanal
+    </button>
   </nav>
 
   <main class="app-content">
@@ -108,6 +111,15 @@
           </tbody>
         </table>
       </div>
+    </section>
+
+    <!-- SEMANAL -->
+    <section id="view-weekly" class="view-section hidden">
+      <div class="view-header">
+        <div class="view-title">Puntos Semanales</div>
+        <div class="view-subtitle">Ranking de lunes a domingo &bull; Premio semanal</div>
+      </div>
+      <div id="weekly-list"><p class="empty-state">Cargando&hellip;</p></div>
     </section>
 
   </main>
