@@ -959,3 +959,35 @@ body::after {
   cursor: pointer;
 }
 .week-selector select:focus { outline: none; border-color: var(--red); }
+
+/* ── Footer criterios de desempate ───────────────────────── */
+.lb-footer {
+  margin-top: 1rem;
+  background: var(--black-card);
+  border: 1px solid var(--black-line);
+  border-left: 3px solid var(--grey);
+  border-radius: 6px;
+  padding: 1rem 1.25rem;
+}
+
+.lb-footer-title {
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--grey);
+  margin-bottom: .6rem;
+}
+
+.lb-footer-list {
+  padding-left: 1.25rem;
+  margin: 0;
+}
+
+.lb-footer-list li {
+  font-size: .78rem;
+  color: var(--grey);
+  line-height: 1.7;
+}
+
+.lb-footer-list li::marker { color: var(--red); }
