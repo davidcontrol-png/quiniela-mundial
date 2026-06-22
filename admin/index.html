@@ -3,140 +3,161 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin &mdash; Quiniela Ogilvy 2026</title>
-  <link rel="icon" href="../logo_quiniela.png" />
-  <link rel="stylesheet" href="../css/admin.css" />
+  <title>Quiniela Ogilvy 2026 &mdash; Ogilvy El Salvador</title>
+  <link rel="icon" href="logo_quiniela.png" />
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
-<header class="admin-header">
-  <div class="admin-brand">
-    QUINIELA <span>OGILVY</span> 2026
-    <small>&#x2699; Panel Administrador</small>
-  </div>
-  <div class="admin-user">
-    Bienvenido, <strong id="admin-name"></strong>
-    <button class="btn-admin-logout" id="btn-admin-logout">Salir</button>
-  </div>
-</header>
+<!-- LOGIN -->
+<div id="screen-login">
 
-<div class="admin-tabs">
-  <button class="admin-tab active"  data-tab="users">&#x1F465; Usuarios</button>
-  <button class="admin-tab"         data-tab="matches">&#x26BD; Partidos</button>
-  <button class="admin-tab"         data-tab="predicciones">&#x1F4CB; Predicciones</button>
-  <button class="admin-tab"         data-tab="semanal">&#x1F4C5; Semanal</button>
-  <button class="admin-tab"         data-tab="actividad">&#x1F4CA; Actividad</button>
-  <button class="admin-tab"         data-tab="stats">&#x1F3C6; Resumen</button>
+  <!-- Panel izquierdo rojo -->
+  <div class="login-logo-side">
+    <img src="logo_quiniela.png" class="login-logo-img" alt="Quiniela Ogilvy 2026" />
+    <div class="brand-sub">Copa Mundial FIFA 2026 &bull; El Salvador</div>
+  </div>
+
+  <!-- Panel derecho negro -->
+  <div class="login-card">
+    <div class="login-eyebrow">Bienvenido</div>
+    <div class="login-headline">INGRESA<br>A LA<br>QUINIELA</div>
+    <div class="login-divider"></div>
+
+    <div class="login-field">
+      <label for="input-username">Usuario</label>
+      <input type="text" id="input-username" placeholder="nombre.apellido" autocomplete="username" />
+    </div>
+    <div class="login-field">
+      <label for="input-password">Contrase&ntilde;a</label>
+      <input type="password" id="input-password" placeholder="&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;" autocomplete="current-password" />
+    </div>
+
+    <button class="btn-login-main" id="btn-login">INGRESAR &rarr;</button>
+    <p id="login-error"></p>
+  </div>
 </div>
 
-<div class="admin-content">
+<!-- APP PRINCIPAL -->
+<div id="screen-app" class="hidden">
 
-  <!-- USUARIOS -->
-  <div class="admin-panel" id="panel-users">
-    <h2>Gesti&oacute;n de Usuarios</h2>
-    <div class="toolbar">
-      <button class="btn-primary" id="btn-new-user">+ Nuevo Usuario</button>
+  <header class="app-header">
+    <div class="header-brand">
+      <img src="logo_quiniela.png" class="header-logo" alt="Quiniela Ogilvy 2026" />
+      <span class="header-brand-text">Quiniela <span>Ogilvy</span> 2026</span>
     </div>
-    <p style="font-size:.8rem;color:#888;margin-bottom:.75rem">
-      Para resetear contrase&ntilde;a: usa el bot&oacute;n <strong>Reset Pass</strong> o ve directamente a
-      <strong>Firebase Console &rarr; Authentication &rarr; edita el usuario &rarr; cambia la contrase&ntilde;a</strong>.
-    </p>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>Nombre</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th>Puntos</th><th>Acciones</th></tr>
-        </thead>
-        <tbody id="users-table-body">
-          <tr><td colspan="7" style="text-align:center;padding:2rem;color:#888">Cargando&hellip;</td></tr>
-        </tbody>
-      </table>
+    <div class="header-user">
+      <div class="avatar" id="user-avatar">?</div>
+      <span id="user-display-name"></span>
+      <button class="btn-change-pass" id="btn-change-pass" title="Cambiar contrase&ntilde;a">&#x1F512;</button>
+      <button class="btn-logout" id="btn-logout">Salir</button>
     </div>
-  </div>
+  </header>
 
-  <!-- PARTIDOS -->
-  <div class="admin-panel hidden" id="panel-matches">
-    <h2>Gesti&oacute;n de Partidos</h2>
-    <div class="toolbar">
-      <button class="btn-primary" id="btn-new-match">+ Nuevo Partido</button>
-    </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>Fecha / Hora</th><th>Partido</th><th>Fase</th><th>Estado</th><th>Resultado</th><th>Acciones</th></tr>
-        </thead>
-        <tbody id="matches-table-body">
-          <tr><td colspan="6" style="text-align:center;padding:2rem;color:#888">Cargando&hellip;</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <nav class="app-nav">
+    <button class="nav-btn active" data-view="home">
+      <span class="nav-icon">&#x26BD;</span>Hoy
+    </button>
+    <button class="nav-btn" data-view="predictions">
+      <span class="nav-icon">&#x1F3AF;</span>Predicciones
+    </button>
+    <button class="nav-btn" data-view="leaderboard">
+      <span class="nav-icon">&#x1F3C6;</span>Tabla
+    </button>
+    <button class="nav-btn" data-view="weekly">
+      <span class="nav-icon">&#x1F4C5;</span>Semanal
+    </button>
+  </nav>
 
-  <!-- PREDICCIONES POR PARTIDO -->
-  <div class="admin-panel hidden" id="panel-predicciones">
-    <h2>Predicciones por Partido</h2>
-    <p style="font-size:.82rem;color:#888;margin-bottom:1rem">Selecciona un partido finalizado para ver qu&eacute; predijo cada usuario.</p>
-    <div style="margin-bottom:1rem">
-      <select id="pred-match-select" style="background:#1c1c1c;border:1px solid #333;color:#fff;padding:.6rem 1rem;border-radius:6px;font-size:.85rem;width:100%;max-width:600px">
-        <option value="">-- Selecciona un partido --</option>
-      </select>
-    </div>
-    <div id="pred-result-display" style="font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:#E3262B;margin-bottom:1rem;letter-spacing:1px"></div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>Usuario</th><th style="text-align:center">Predicci&oacute;n</th><th style="text-align:center">Puntos</th><th style="text-align:center">Resultado</th></tr>
-        </thead>
-        <tbody id="pred-table-body">
-          <tr><td colspan="4" style="text-align:center;padding:2rem;color:#888">Selecciona un partido arriba</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
+  <main class="app-content">
 
-  <!-- PUNTOS SEMANALES -->
-  <div class="admin-panel hidden" id="panel-semanal">
-    <h2>Puntos Semanales</h2>
-    <p style="font-size:.82rem;color:#888;margin-bottom:1rem">Ranking de lunes a domingo de cada semana del Mundial.</p>
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
-      <select id="week-select" style="background:#1c1c1c;border:1px solid #333;color:#fff;padding:.6rem 1rem;border-radius:6px;font-size:.85rem">
-        <option value="">-- Selecciona semana --</option>
-      </select>
-      <span id="semanal-match-count" style="font-size:.8rem;color:#888"></span>
-    </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>#</th><th>Nombre</th><th>Pts Semana</th><th>&#x1F3AF; Exactos</th><th>&#x2714;&#xFE0F; Resultado</th></tr>
-        </thead>
-        <tbody id="semanal-table-body">
-          <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Selecciona una semana</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- ACTIVIDAD -->
-  <div class="admin-panel hidden" id="panel-actividad">
-    <h2>Actividad de Usuarios</h2>
-    <p style="font-size:.82rem;color:#888;margin-bottom:1.25rem">Cu&aacute;ntas predicciones ha registrado cada usuario.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.75rem;margin-bottom:1.5rem">
-      <div class="stat-card">
-        <div id="stat-act-total" class="stat-num">-</div>
-        <div class="stat-label">Usuarios totales</div>
+    <section id="view-home" class="view-section">
+      <div class="view-header">
+        <div class="view-title">Partidos del D&iacute;a</div>
+        <div class="view-subtitle">Copa Mundial FIFA 2026 &bull; Hora El Salvador</div>
       </div>
-      <div class="stat-card" style="border-top-color:#06d6a0">
-        <div id="stat-act-activos" class="stat-num" style="color:#06d6a0">-</div>
-        <div class="stat-label">Han predicho</div>
+      <div id="matches-today"><p class="empty-state">Cargando partidos&hellip;</p></div>
+    </section>
+
+    <section id="view-predictions" class="view-section hidden">
+      <div class="view-header">
+        <div class="view-title">Mis Predicciones</div>
+        <div class="view-subtitle">Se cierran 1 hora antes de cada partido</div>
       </div>
-      <div class="stat-card" style="border-top-color:#E3262B">
-        <div id="stat-act-inactivos" class="stat-num" style="color:#E3262B">-</div>
-        <div class="stat-label">Sin actividad</div>
+      <div class="search-box">
+        <span class="search-icon">&#x1F50D;</span>
+        <input type="text" id="pred-search" placeholder="Buscar equipo&hellip;" />
       </div>
+      <div id="predictions-list"><p class="empty-state">Cargando&hellip;</p></div>
+    </section>
+
+    <section id="view-leaderboard" class="view-section hidden">
+      <div class="view-header">
+        <div class="view-title">Tabla de Puntos</div>
+        <div class="view-subtitle">Actualizaci&oacute;n autom&aacute;tica al terminar cada partido</div>
+      </div>
+      <div class="scoring-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#444"></div>0 pts &mdash; No adivina</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#D4AF37"></div>1 pt &mdash; Acierta G/E/P</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#fff"></div>3 pts &mdash; Marcador exacto</div>
+      </div>
+      <div style="overflow-x:auto;border:1px solid #2a2a2a;">
+        <table class="leaderboard-table">
+          <thead>
+            <tr><th>#</th><th>Nombre</th><th>Puntos</th><th>Exactos</th><th>Resultado</th></tr>
+          </thead>
+          <tbody id="leaderboard-body">
+            <tr><td colspan="5" style="text-align:center;padding:2rem;color:#888">Cargando&hellip;</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="leaderboard-footer"></div>
+    </section>
+
+    <!-- SEMANAL -->
+    <section id="view-weekly" class="view-section hidden">
+      <div class="view-header">
+        <div class="view-title">Puntos Semanales</div>
+        <div class="view-subtitle">Ranking de lunes a domingo &bull; Premio semanal</div>
+      </div>
+      <div id="weekly-list"><p class="empty-state">Cargando&hellip;</p></div>
+    </section>
+
+  </main>
+</div>
+
+<!-- MODAL CONTRASE&Ntilde;A -->
+<div class="modal-overlay hidden" id="modal-pass">
+  <div class="modal-box">
+    <h3>Cambiar Contrase&ntilde;a</h3>
+    <div class="form-field">
+      <label>Contrase&ntilde;a actual</label>
+      <input type="password" id="pass-current" placeholder="Tu contrase&ntilde;a actual" />
     </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>#</th><th>Nombre</th><th style="text-align:center">Predicciones</th><th>Participaci&oacute;n</th><th>Estado</th></tr>
-        </thead>
-        <tbody id="actividad-table-body">
-          <tr><td colspan="5" style="text-align
+    <div class="form-field">
+      <label>Nueva contrase&ntilde;a</label>
+      <input type="password" id="pass-new" placeholder="M&iacute;nimo 6 caracteres" />
+    </div>
+    <div class="form-field">
+      <label>Confirmar nueva contrase&ntilde;a</label>
+      <input type="password" id="pass-confirm" placeholder="Repite la nueva contrase&ntilde;a" />
+    </div>
+    <p id="pass-error" class="pass-error"></p>
+    <div class="modal-actions">
+      <button class="btn-cancel-modal" id="btn-cancel-pass">Cancelar</button>
+      <button class="btn-save-modal" id="btn-save-pass">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+<script src="js/matches-data.js"></script>
+<script src="js/app.js"></script>
+
+</body>
+</html>
