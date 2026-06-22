@@ -601,11 +601,14 @@ async function exportAuditExcel() {
 
   try {
     // 1. Traer datos base
-    const matchesSnap = await db.collection("matches").where("status","==","finished").orderBy("datetime").get();
+    const matchesSnap = await db.collection("matches").where("status","==","finished").get();
     const usersSnap   = await db.collection("users").get();
     const predsSnap   = await db.collection("predictions").get();
 
-    const matches = matchesSnap.docs.map(d => ({id:d.id,...d.data()}));
+    // Ordenar en cliente para evitar requerir índice compuesto
+    const matches = matchesSnap.docs
+      .map(d => ({id:d.id,...d.data()}))
+      .sort((a,b) => (a.dateStr > b.dateStr ? 1 : a.dateStr < b.dateStr ? -1 : a.timeStr > b.timeStr ? 1 : -1));
     const users   = {};
     usersSnap.docs.forEach(d => { users[d.id] = d.data(); });
 
