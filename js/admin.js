@@ -613,11 +613,18 @@ async function exportAuditExcel() {
     usersSnap.docs.forEach(d => { users[d.id] = d.data(); });
 
     // Indexar predicciones por matchId+userId
+    // Si hay duplicados, quedarse con el de timestamp mas reciente
     const predIndex = {};
     predsSnap.docs.forEach(pd => {
-      const p = pd.data();
-      const key = `${p.matchId}_${p.userId}`;
-      predIndex[key] = p;
+      const p   = pd.data();
+      const key = p.matchId + "_" + p.userId;
+      if (!predIndex[key]) {
+        predIndex[key] = p;
+      } else {
+        const existingTs = predIndex[key].updatedAt && predIndex[key].updatedAt.toMillis ? predIndex[key].updatedAt.toMillis() : 0;
+        const newTs      = p.updatedAt && p.updatedAt.toMillis ? p.updatedAt.toMillis() : 0;
+        if (newTs > existingTs) predIndex[key] = p;
+      }
     });
 
     const wb = XLSX.utils.book_new();
