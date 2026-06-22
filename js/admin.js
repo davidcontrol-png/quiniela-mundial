@@ -686,7 +686,11 @@ async function exportAuditExcel() {
 
         if (pred) {
           prediccion = `${match.home} ${pred.predictedHome} - ${pred.predictedAway} ${match.away}`;
-          puntos     = pred.points ?? 0;
+          // Recalcular puntos en tiempo real en vez de usar campo guardado
+          puntos = calcPts(
+            { home: pred.predictedHome, away: pred.predictedAway },
+            { home: match.scoreHome, away: match.scoreAway }
+          );
           timestamp  = pred.updatedAt?.toDate
             ? pred.updatedAt.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
             : "-";
@@ -746,7 +750,11 @@ async function exportAuditExcel() {
 
         if (pred) {
           prediccion = `${pred.predictedHome} - ${pred.predictedAway}`;
-          puntos     = pred.points ?? 0;
+          // Recalcular puntos en tiempo real
+          puntos = calcPts(
+            { home: pred.predictedHome, away: pred.predictedAway },
+            { home: match.scoreHome, away: match.scoreAway }
+          );
           timestamp  = pred.updatedAt?.toDate
             ? pred.updatedAt.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
             : "-";
@@ -771,6 +779,67 @@ async function exportAuditExcel() {
       {wch:16},{wch:8},{wch:18},{wch:22}
     ];
     XLSX.utils.book_append_sheet(wb, wsByUser, "Predicciones por Usuario");
+
+    // ── HOJAS SEMANALES ─────────────────────────────────────
+    const semanas = [
+      { label: "Semana 1", start: "2026-06-09", end: "2026-06-15" },
+      { label: "Semana 2", start: "2026-06-16", end: "2026-06-22" },
+      { label: "Semana 3", start: "2026-06-23", end: "2026-06-29" },
+      { label: "Semana 4", start: "2026-06-30", end: "2026-07-06" },
+      { label: "Semana 5", start: "2026-07-07", end: "2026-07-13" },
+      { label: "Semana 6", start: "2026-07-14", end: "2026-07-19" },
+    ];
+
+    for (const semana of semanas) {
+      // Filtrar partidos de esta semana
+      const semanaMatchIds = new Set(
+        matches.filter(m => m.dateStr >= semana.start && m.dateStr <= semana.end).map(m => m.id)
+      );
+      if (semanaMatchIds.size === 0) continue;
+
+      // Calcular puntos semanales por usuario
+      const semanaPoints = {};
+      predsSnap.docs.forEach(pd => {
+        const p = pd.data();
+        if (!semanaMatchIds.has(p.matchId)) return;
+        const match = matches.find(m => m.id === p.matchId);
+        if (!match || match.scoreHome === null) return;
+        const pts = calcPts(
+          { home: p.predictedHome, away: p.predictedAway },
+          { home: match.scoreHome, away: match.scoreAway }
+        );
+        if (!semanaPoints[p.userId]) semanaPoints[p.userId] = { pts: 0, exact: 0, result: 0 };
+        semanaPoints[p.userId].pts    += pts;
+        if (pts === 3) semanaPoints[p.userId].exact++;
+        if (pts === 1) semanaPoints[p.userId].result++;
+      });
+
+      const semanaRanking = Object.entries(users)
+        .filter(([,u]) => !u.disabled)
+        .map(([uid, u]) => {
+          const w = semanaPoints[uid] || { pts: 0, exact: 0, result: 0 };
+          return { name: u.displayName || u.username, ...w };
+        })
+        .sort((a, b) => b.pts - a.pts || b.exact - a.exact || b.result - a.result);
+
+      const partidos = matches.filter(m => semanaMatchIds.has(m.id));
+      const semanaData = [
+        [`QUINIELA OGILVY 2026 \u2014 ${semana.label} (${semana.start} al ${semana.end})`],
+        [`Partidos jugados esta semana: ${partidos.filter(m=>m.scoreHome!==null).length} / ${partidos.length}`],
+        [`Partidos: ${partidos.map(m=>m.home+" vs "+m.away).join(" | ")}`],
+        [],
+        ["#", "Nombre", "Puntos Semana", "Exactos (3pts)", "Resultados (1pt)", "\uD83C\uDFC6 Premio"],
+      ];
+
+      semanaRanking.forEach((u, i) => {
+        const premio = i === 0 && u.pts > 0 ? "\uD83E\uDD47 GANADOR" : i === 1 && u.pts > 0 ? "\uD83E\uDD48 2do lugar" : i === 2 && u.pts > 0 ? "\uD83E\uDD49 3er lugar" : "";
+        semanaData.push([i + 1, u.name, u.pts, u.exact, u.result, premio]);
+      });
+
+      const wsSemana = XLSX.utils.aoa_to_sheet(semanaData);
+      wsSemana["!cols"] = [{wch:4},{wch:28},{wch:14},{wch:14},{wch:14},{wch:14}];
+      XLSX.utils.book_append_sheet(wb, wsSemana, semana.label);
+    }
 
     // ── DESCARGAR ────────────────────────────────────────────
     const fecha = new Date().toLocaleDateString("es-SV",{timeZone:"America/El_Salvador"})
