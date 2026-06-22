@@ -590,3 +590,207 @@ function showAdminToast(msg, type = "info") {
 document.getElementById("btn-admin-logout").addEventListener("click", () => {
   auth.signOut().then(() => window.location.href = "../index.html");
 });
+
+// ============================================================
+//  EXPORTAR EXCEL DE AUDITORÍA
+// ============================================================
+async function exportAuditExcel() {
+  const btn = document.getElementById("btn-export-excel");
+  btn.textContent = "\u23F3 Generando...";
+  btn.disabled = true;
+
+  try {
+    // 1. Traer datos base
+    const matchesSnap = await db.collection("matches").where("status","==","finished").orderBy("datetime").get();
+    const usersSnap   = await db.collection("users").get();
+    const predsSnap   = await db.collection("predictions").get();
+
+    const matches = matchesSnap.docs.map(d => ({id:d.id,...d.data()}));
+    const users   = {};
+    usersSnap.docs.forEach(d => { users[d.id] = d.data(); });
+
+    // Indexar predicciones por matchId+userId
+    const predIndex = {};
+    predsSnap.docs.forEach(pd => {
+      const p = pd.data();
+      const key = `${p.matchId}_${p.userId}`;
+      predIndex[key] = p;
+    });
+
+    const wb = XLSX.utils.book_new();
+
+    // ── HOJA 1: RESUMEN GENERAL ─────────────────────────────
+    const resumenData = [
+      ["QUINIELA OGILVY 2026 \u2014 Auditor\u00eda de Resultados"],
+      [`Generado: ${new Date().toLocaleString("es-SV", {timeZone:"America/El_Salvador"})}`],
+      [`Partidos finalizados: ${matches.length}`],
+      [],
+      ["#","Nombre","Usuario","Puntos Totales","Exactos (3pts)","Resultados (1pt)","Email"],
+    ];
+
+    // Ranking de usuarios
+    const ranking = Object.entries(users)
+      .filter(([,u]) => !u.disabled)
+      .map(([uid, u]) => ({
+        uid,
+        name:   u.displayName || u.username,
+        user:   u.username,
+        points: u.totalPoints || 0,
+        exact:  u.exactPredictions || 0,
+        result: u.resultPredictions || 0,
+        email:  u.email
+      }))
+      .sort((a,b) => b.points-a.points || b.exact-a.exact || b.result-a.result);
+
+    ranking.forEach((u, i) => {
+      resumenData.push([i+1, u.name, u.user, u.points, u.exact, u.result, u.email]);
+    });
+
+    const wsResumen = XLSX.utils.aoa_to_sheet(resumenData);
+
+    // Estilos de ancho de columna
+    wsResumen["!cols"] = [
+      {wch:4},{wch:28},{wch:22},{wch:14},{wch:14},{wch:14},{wch:30}
+    ];
+
+    XLSX.utils.book_append_sheet(wb, wsResumen, "Resumen General");
+
+    // ── HOJA 2: AUDITORÍA POR PARTIDO ───────────────────────
+    const auditData = [
+      ["QUINIELA OGILVY 2026 \u2014 Predicciones por Partido"],
+      [],
+      [
+        "Fecha","Partido","Grupo","Resultado Real",
+        "Usuario","Nombre","Predicci\u00f3n","Puntos","Resultado","Timestamp"
+      ]
+    ];
+
+    for (const match of matches) {
+      const fechaStr = match.datetime?.toDate
+        ? match.datetime.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
+        : match.dateStr;
+      const resultadoReal = `${match.home} ${match.scoreHome} - ${match.scoreAway} ${match.away}`;
+
+      // Fila por cada usuario
+      const userList = Object.entries(users)
+        .filter(([,u]) => !u.disabled)
+        .sort((a,b) => (a[1].displayName||a[1].username).localeCompare(b[1].displayName||b[1].username));
+
+      for (const [uid, u] of userList) {
+        const pred = predIndex[`${match.id}_${uid}`];
+
+        let prediccion = "Sin predicci\u00f3n";
+        let puntos     = "-";
+        let resultado  = "-";
+        let timestamp  = "-";
+
+        if (pred) {
+          prediccion = `${match.home} ${pred.predictedHome} - ${pred.predictedAway} ${match.away}`;
+          puntos     = pred.points ?? 0;
+          timestamp  = pred.updatedAt?.toDate
+            ? pred.updatedAt.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
+            : "-";
+
+          if (puntos === 3)      resultado = "\u2b50 Marcador exacto";
+          else if (puntos === 1) resultado = "\u2714 Result correcto";
+          else if (puntos === 0) resultado = "\u2715 Fall\u00f3";
+        }
+
+        auditData.push([
+          fechaStr,
+          `${match.home} vs ${match.away}`,
+          `Grupo ${match.group}`,
+          resultadoReal,
+          u.username,
+          u.displayName || u.username,
+          prediccion,
+          puntos,
+          resultado,
+          timestamp
+        ]);
+      }
+
+      // Fila separadora entre partidos
+      auditData.push(["---","---","---","---","---","---","---","---","---","---"]);
+    }
+
+    const wsAudit = XLSX.utils.aoa_to_sheet(auditData);
+    wsAudit["!cols"] = [
+      {wch:20},{wch:28},{wch:10},{wch:28},
+      {wch:20},{wch:28},{wch:32},{wch:8},{wch:20},{wch:22}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsAudit, "Predicciones por Partido");
+
+    // ── HOJA 3: AUDITORÍA POR USUARIO ───────────────────────
+    const byUserData = [
+      ["QUINIELA OGILVY 2026 \u2014 Predicciones por Usuario"],
+      [],
+      [
+        "Usuario","Nombre","Partido","Fecha","Resultado Real",
+        "Predicci\u00f3n","Puntos","Resultado","Timestamp"
+      ]
+    ];
+
+    for (const u of ranking) {
+      for (const match of matches) {
+        const pred = predIndex[`${match.id}_${u.uid}`];
+        const fechaStr = match.datetime?.toDate
+          ? match.datetime.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
+          : match.dateStr;
+        const resultadoReal = `${match.scoreHome} - ${match.scoreAway}`;
+
+        let prediccion = "Sin predicci\u00f3n";
+        let puntos     = "-";
+        let resultado  = "-";
+        let timestamp  = "-";
+
+        if (pred) {
+          prediccion = `${pred.predictedHome} - ${pred.predictedAway}`;
+          puntos     = pred.points ?? 0;
+          timestamp  = pred.updatedAt?.toDate
+            ? pred.updatedAt.toDate().toLocaleString("es-SV",{timeZone:"America/El_Salvador"})
+            : "-";
+          if (puntos===3)      resultado="\u2b50 Exacto";
+          else if (puntos===1) resultado="\u2714 Resultado";
+          else if (puntos===0) resultado="\u2715 Fall\u00f3";
+        }
+
+        byUserData.push([
+          u.user, u.name,
+          `${match.home} vs ${match.away}`,
+          fechaStr, resultadoReal,
+          prediccion, puntos, resultado, timestamp
+        ]);
+      }
+      byUserData.push(["---","---","---","---","---","---","---","---","---"]);
+    }
+
+    const wsByUser = XLSX.utils.aoa_to_sheet(byUserData);
+    wsByUser["!cols"] = [
+      {wch:20},{wch:28},{wch:28},{wch:20},{wch:16},
+      {wch:16},{wch:8},{wch:18},{wch:22}
+    ];
+    XLSX.utils.book_append_sheet(wb, wsByUser, "Predicciones por Usuario");
+
+    // ── DESCARGAR ────────────────────────────────────────────
+    const fecha = new Date().toLocaleDateString("es-SV",{timeZone:"America/El_Salvador"})
+                            .replace(/\//g,"-");
+    XLSX.writeFile(wb, `Auditoria_Quiniela_Ogilvy_${fecha}.xlsx`);
+
+    btn.textContent = "\u2705 \u00a1Descargado!";
+    btn.style.background = "#06d6a0";
+    btn.style.color = "#000";
+    setTimeout(() => {
+      btn.textContent = "\uD83D\uDCE5 Descargar Excel de Auditor\u00eda";
+      btn.style.background = "";
+      btn.style.color = "";
+      btn.disabled = false;
+    }, 3000);
+
+  } catch(e) {
+    console.error("Export error:", e);
+    showAdminToast("Error al generar el Excel: " + e.message, "error");
+    btn.textContent = "\uD83D\uDCE5 Descargar Excel de Auditor\u00eda";
+    btn.disabled = false;
+  }
+}
