@@ -176,12 +176,12 @@ async function loadUserPredictions() {
 }
 
 async function savePrediction(matchId,home,away) {
-  const ex=predictions[matchId];
+  // ID deterministico matchId_userId: imposible crear duplicados
+  const docId = matchId + "_" + currentUser.uid;
   const data={userId:currentUser.uid,matchId,predictedHome:home,predictedAway:away,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp(),points:0};
-  if (ex?.docId) await db.collection("predictions").doc(ex.docId).update(data);
-  else { const ref=await db.collection("predictions").add(data); predictions[matchId]={home,away,docId:ref.id}; }
-  predictions[matchId]={...predictions[matchId],home,away};
+  await db.collection("predictions").doc(docId).set(data,{merge:true});
+  predictions[matchId]={home,away,docId};
   showToast("Predicci\u00f3n guardada \u2705","success");
 }
 
