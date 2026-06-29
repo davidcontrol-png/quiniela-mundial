@@ -175,13 +175,14 @@ async function loadUserPredictions() {
   snap.docs.forEach(d=>{const p=d.data();predictions[p.matchId]={home:p.predictedHome,away:p.predictedAway,docId:d.id};});
 }
 
-async function savePrediction(matchId,home,away) {
+async function savePrediction(matchId,home,away,penaltyWinner=null) {
   // ID deterministico matchId_userId: imposible crear duplicados
   const docId = matchId + "_" + currentUser.uid;
   const data={userId:currentUser.uid,matchId,predictedHome:home,predictedAway:away,
+    penaltyWinner: penaltyWinner || null,
     updatedAt:firebase.firestore.FieldValue.serverTimestamp(),points:0};
   await db.collection("predictions").doc(docId).set(data,{merge:true});
-  predictions[matchId]={home,away,docId};
+  predictions[matchId]={home,away,docId,penaltyWinner};
   showToast("Predicci\u00f3n guardada \u2705","success");
 }
 
@@ -217,9 +218,34 @@ async function loadLeaderboard() {
 
 function calculatePoints(pred,actual) {
   if (actual.home===null||actual.away===null) return 0;
-  if (pred.home===actual.home&&pred.away===actual.away) return 3;
-  if (Math.sign(pred.home-pred.away)===Math.sign(actual.home-actual.away)) return 1;
-  return 0;
+  const isKnockout = actual.penaltyWinner !== undefined && actual.penaltyWinner !== null;
+  const isDrawActual = actual.home===actual.away;
+  const isDrawPred   = pred.home===pred.away;
+
+  if (!isKnockout) {
+    // Fase de grupos: logica normal
+    if (pred.home===actual.home&&pred.away===actual.away) return 3;
+    if (Math.sign(pred.home-pred.away)===Math.sign(actual.home-actual.away)) return 1;
+    return 0;
+  }
+
+  // Fase eliminatoria
+  if (!isDrawActual) {
+    // Partido termino sin empate en tiempo normal
+    if (pred.home===actual.home&&pred.away===actual.away) return 3;
+    if (Math.sign(pred.home-pred.away)===Math.sign(actual.home-actual.away)) return 1;
+    return 0;
+  }
+
+  // Partido termino en empate y fue a penales
+  if (!isDrawPred) return 0; // predijo ganador directo, fallo
+
+  const exactScore  = pred.home===actual.home && pred.away===actual.away;
+  const exactPenal  = pred.penaltyWinner && pred.penaltyWinner===actual.penaltyWinner;
+
+  if (exactScore && exactPenal) return 3;  // marcador exacto + penales
+  if (exactScore || exactPenal) return 2;  // solo marcador o solo penales
+  return 1; // solo acerto que empata
 }
 
 async function recalculateAllPoints() {
@@ -274,15 +300,28 @@ function renderMatchCard(m,showPrediction=false) {
   const score=m.status==="finished"
     ?`<span class="score-result">${m.scoreHome} - ${m.scoreAway}</span>`
     :`<span class="match-time">${m.timeStr}</span>`;
+  const isKnockout = m.stage && m.stage!=="grupo";
   const predHtml=showPrediction?`
+    ${isKnockout?`<div class="knockout-info">&#x2139;&#xFE0F; Fase eliminatoria: si predices empate, selecciona tambi&eacute;n qui&eacute;n gana en penales.</div>`:""}
     <div class="prediction-row ${locked?"locked":""}">
       <input type="number" min="0" max="20" class="score-input" data-match="${m.id}" data-side="home"
         value="${pred?pred.home:""}" ${locked?"disabled":""} placeholder="0">
       <span class="dash">-</span>
       <input type="number" min="0" max="20" class="score-input" data-match="${m.id}" data-side="away"
         value="${pred?pred.away:""}" ${locked?"disabled":""} placeholder="0">
-      ${!locked?`<button class="btn-save-pred" data-match="${m.id}">\u2713 Guardar</button>`:`<span class="lock-label">\uD83D\uDD12 Cerrado</span>`}
-    </div>`:"";
+      ${!locked?`<button class="btn-save-pred" data-match="${m.id}">&#x2713; Guardar</button>`:`<span class="lock-label">&#x1F512; Cerrado</span>`}
+    </div>
+    ${isKnockout?`<div class="penalty-row" id="penalty-row-${m.id}" style="display:${pred&&pred.home===pred.away?"flex":"none"}">
+      <span class="penalty-label">&#x1F3C6; Gana en penales:</span>
+      <button class="btn-penalty ${pred&&pred.penaltyWinner===m.home?"active":""}" data-match="${m.id}" data-team="${m.home}" ${locked?"disabled":""} onclick="setPenalty('${m.id}','${m.home}',this)">${m.home}</button>
+      <button class="btn-penalty ${pred&&pred.penaltyWinner===m.away?"active":""}" data-match="${m.id}" data-team="${m.away}" ${locked?"disabled":""} onclick="setPenalty('${m.id}','${m.away}',this)">${m.away}</button>
+    </div>`:""}
+    ${isKnockout&&!locked?`<div class="knockout-pts-legend">
+      <span>&#x1F7E1; Solo empate = 1 pt</span>
+      <span>&#x1F7E0; Marcador exacto O penales correcto = 2 pts</span>
+      <span>&#x1F7E2; Marcador exacto + penales correcto = 3 pts</span>
+    </div>`:""}
+    `:"";
   const pts=(pred&&m.status==="finished")
     ?`<span class="points-badge pts-${calculatePoints(pred,{home:m.scoreHome,away:m.scoreAway})}">${calculatePoints(pred,{home:m.scoreHome,away:m.scoreAway})} pts</span>`:"";
   return `
@@ -299,10 +338,17 @@ function renderMatchCard(m,showPrediction=false) {
 
 function isMatchLocked(m) {
   const ko=m.datetime?.toDate?m.datetime.toDate():new Date(m.datetime);
-  return new Date()>=new Date(ko.getTime()-60*60*1000)||m.status==="finished";
+  return new Date()>=new Date(ko.getTime()-30*60*1000)||m.status==="finished";
 }
 
 function addPredictionListeners(container) {
+  container.querySelectorAll(".score-input").forEach(input=>{
+    input.addEventListener("input",()=>{
+      const mid = input.getAttribute("data-match");
+      updatePenaltyVisibility(mid);
+    });
+  });
+
   container.querySelectorAll(".btn-save-pred").forEach(btn=>{
     btn.addEventListener("click",async()=>{
       const mid=btn.getAttribute("data-match");
@@ -310,11 +356,38 @@ function addPredictionListeners(container) {
       const away=parseInt(container.querySelector(`.score-input[data-match="${mid}"][data-side="away"]`).value);
       if (isNaN(home)||isNaN(away)||home<0||away<0){showToast("Marcador inv\u00e1lido.","error");return;}
       if (isMatchLocked(allMatches.find(m=>m.id===mid))){showToast("Ya est\u00e1 cerrado.","error");return;}
-      await savePrediction(mid,home,away);
+      const penWinner = predictions[mid]?.penaltyWinner || null;
+      await savePrediction(mid,home,away,penWinner);
       btn.textContent="\u2713 \u00a1Guardado!";btn.style.background="#06d6a0";
       setTimeout(()=>{btn.textContent="\u2713 Guardar";btn.style.background="";},2000);
     });
   });
+}
+
+// PENALTY SELECTOR
+function setPenalty(matchId, team, btn) {
+  const row = document.getElementById("penalty-row-"+matchId);
+  if (!row) return;
+  row.querySelectorAll(".btn-penalty").forEach(b => b.classList.remove("active"));
+  btn.classList.add("active");
+  if (!predictions[matchId]) predictions[matchId] = {};
+  predictions[matchId].penaltyWinner = team;
+}
+
+// Mostrar/ocultar penales cuando cambia el score
+function updatePenaltyVisibility(matchId) {
+  const homeVal = document.querySelector(`.score-input[data-match="${matchId}"][data-side="home"]`)?.value;
+  const awayVal = document.querySelector(`.score-input[data-match="${matchId}"][data-side="away"]`)?.value;
+  const row = document.getElementById("penalty-row-"+matchId);
+  if (!row) return;
+  if (homeVal !== "" && awayVal !== "" && homeVal === awayVal) {
+    row.style.display = "flex";
+  } else {
+    row.style.display = "none";
+    // Limpiar seleccion de penales si ya no es empate
+    row.querySelectorAll(".btn-penalty").forEach(b => b.classList.remove("active"));
+    if (predictions[matchId]) predictions[matchId].penaltyWinner = null;
+  }
 }
 
 // PREDICCIONES
