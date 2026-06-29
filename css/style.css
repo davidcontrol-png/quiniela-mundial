@@ -991,3 +991,67 @@ body::after {
 }
 
 .lb-footer-list li::marker { color: var(--red); }
+
+/* ── Fase eliminatoria: penales ───────────────────────────── */
+.knockout-info {
+  font-size: .75rem;
+  color: var(--gold, #D4AF37);
+  background: rgba(212,175,55,0.08);
+  border: 1px solid rgba(212,175,55,0.2);
+  border-radius: 5px;
+  padding: .4rem .75rem;
+  margin-bottom: .4rem;
+  letter-spacing: .3px;
+}
+
+.penalty-row {
+  display: none;
+  align-items: center;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: .4rem;
+  padding: .5rem .75rem;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--black-line, #222);
+  border-radius: 6px;
+}
+
+.penalty-label {
+  font-size: .72rem;
+  color: var(--grey, #888);
+  letter-spacing: .5px;
+  white-space: nowrap;
+}
+
+.btn-penalty {
+  background: transparent;
+  border: 1px solid var(--black-line, #333);
+  color: var(--white, #fff);
+  border-radius: 5px;
+  padding: .3rem .75rem;
+  font-size: .75rem;
+  font-family: var(--font-body);
+  cursor: pointer;
+  transition: all .2s;
+}
+.btn-penalty:hover { border-color: var(--red, #E3262B); color: var(--red, #E3262B); }
+.btn-penalty.active {
+  background: var(--red, #E3262B);
+  border-color: var(--red, #E3262B);
+  color: #fff;
+  font-weight: 700;
+}
+.btn-penalty:disabled { opacity: .4; cursor: not-allowed; }
+
+.knockout-pts-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem .75rem;
+  margin-top: .4rem;
+  padding: .35rem .5rem;
+}
+.knockout-pts-legend span {
+  font-size: .68rem;
+  color: var(--grey, #888);
+  letter-spacing: .3px;
+}
