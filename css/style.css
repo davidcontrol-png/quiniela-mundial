@@ -1055,3 +1055,10 @@ body::after {
   color: var(--grey, #888);
   letter-spacing: .3px;
 }
+
+.knockout-pts-note {
+  font-size: .62rem !important;
+  opacity: .65;
+  font-style: italic;
+  width: 100%;
+}
