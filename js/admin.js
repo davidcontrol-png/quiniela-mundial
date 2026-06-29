@@ -236,16 +236,32 @@ async function editMatch(matchId) {
 async function enterScore(matchId, home, away) {
   const homeScore = parseInt(prompt(`Goles de ${home}:`));
   const awayScore = parseInt(prompt(`Goles de ${away}:`));
-  if (isNaN(homeScore) || isNaN(awayScore)) { showAdminToast("Resultado inv\u00e1lido.", "error"); return; }
+  if (isNaN(homeScore) || isNaN(awayScore)) { showAdminToast("Resultado inválido.", "error"); return; }
+
+  let penaltyWinner = null;
+  // Verificar si el partido es de fase eliminatoria
+  const matchDoc = await db.collection("matches").doc(matchId).get();
+  const matchData = matchDoc.data();
+  const isKnockout = matchData.stage && matchData.stage !== "grupo";
+
+  if (isKnockout && homeScore === awayScore) {
+    const pen = prompt(`Empate ${homeScore}-${awayScore}. \u00bfQui\u00e9n gan\u00f3 en penales?\n1: ${home}\n2: ${away}`);
+    if (pen === "1") penaltyWinner = home;
+    else if (pen === "2") penaltyWinner = away;
+    else { showAdminToast("Debes indicar el ganador de penales (1 o 2).", "error"); return; }
+  }
+
   await db.collection("matches").doc(matchId).update({
-    scoreHome: homeScore, scoreAway: awayScore, status: "finished"
+    scoreHome: homeScore, scoreAway: awayScore,
+    penaltyWinner: penaltyWinner,
+    status: "finished"
   });
   showAdminToast("Resultado guardado. Recalculando puntos...", "success");
-  await recalcFromAdmin(matchId, homeScore, awayScore);
+  await recalcFromAdmin(matchId, homeScore, awayScore, penaltyWinner);
   await loadAdminMatches();
 }
 
-async function recalcFromAdmin(matchId, scoreHome, scoreAway) {
+async function recalcFromAdmin(matchId, scoreHome, scoreAway, penaltyWinner=null) {
   const predsSnap = await db.collection("predictions").where("matchId", "==", matchId).get();
 
   // Recalcular puntos totales de cada usuario afectado desde cero
@@ -256,7 +272,7 @@ async function recalcFromAdmin(matchId, scoreHome, scoreAway) {
   const batch = db.batch();
   predsSnap.docs.forEach(pd => {
     const pred = pd.data();
-    const pts  = calcPts({ home: pred.predictedHome, away: pred.predictedAway }, { home: scoreHome, away: scoreAway });
+    const pts  = calcPts({ home: pred.predictedHome, away: pred.predictedAway, penaltyWinner: pred.penaltyWinner }, { home: scoreHome, away: scoreAway, penaltyWinner });
     batch.update(pd.ref, { points: pts });
   });
   await batch.commit();
@@ -288,9 +304,24 @@ async function recalcFromAdmin(matchId, scoreHome, scoreAway) {
 }
 
 function calcPts(pred, actual) {
-  if (pred.home === actual.home && pred.away === actual.away) return 3;
-  if (Math.sign(pred.home - pred.away) === Math.sign(actual.home - actual.away)) return 1;
-  return 0;
+  const isKnockout = actual.penaltyWinner !== undefined && actual.penaltyWinner !== null;
+  const isDrawActual = actual.home === actual.away;
+  const isDrawPred   = pred.home === pred.away;
+
+  if (!isKnockout || !isDrawActual) {
+    // Grupos o partido sin empate
+    if (pred.home===actual.home && pred.away===actual.away) return 3;
+    if (Math.sign(pred.home-pred.away)===Math.sign(actual.home-actual.away)) return 1;
+    return 0;
+  }
+
+  // Eliminatoria con empate y penales
+  if (!isDrawPred) return 0;
+  const exactScore = pred.home===actual.home && pred.away===actual.away;
+  const exactPenal = pred.penaltyWinner && pred.penaltyWinner===actual.penaltyWinner;
+  if (exactScore && exactPenal) return 3;
+  if (exactScore || exactPenal) return 2;
+  return 1;
 }
 
 // ============================================================
